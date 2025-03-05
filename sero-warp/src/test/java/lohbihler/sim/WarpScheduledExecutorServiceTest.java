@@ -14,6 +14,7 @@ import static org.junit.Assert.fail;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CancellationException;
@@ -23,20 +24,20 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-
+import lohbihler.warp.WarpClock;
+import lohbihler.warp.WarpScheduledExecutorService;
 import org.junit.Before;
 import org.junit.Test;
 
-import lohbihler.warp.WarpClock;
-import lohbihler.warp.WarpScheduledExecutorService;
-
 public class WarpScheduledExecutorServiceTest {
+
     private WarpClock clock;
     private Instant start;
     private WarpScheduledExecutorService scheduler;
 
     @Before
     public void before() {
+        ZoneId zone = ZoneId.systemDefault();
         clock = new WarpClock();
         start = clock.instant();
         scheduler = new WarpScheduledExecutorService(clock);
@@ -44,12 +45,15 @@ public class WarpScheduledExecutorServiceTest {
 
     @Test
     public void callables() throws InterruptedException {
-        final ScheduledFuture<Boolean> success = scheduler.schedule(() -> true, 100, TimeUnit.MINUTES);
-        final ScheduledFuture<Boolean> timeout = scheduler.schedule(() -> true, 100, TimeUnit.MINUTES);
+        final ScheduledFuture<Boolean> success = scheduler.schedule(() -> true, 100,
+            TimeUnit.MINUTES);
+        final ScheduledFuture<Boolean> timeout = scheduler.schedule(() -> true, 100,
+            TimeUnit.MINUTES);
         final ScheduledFuture<Boolean> exception = scheduler.schedule(() -> {
             throw new Exception("test ex");
         }, 100, TimeUnit.MINUTES);
-        final ScheduledFuture<Boolean> cancel = scheduler.schedule(() -> true, 100, TimeUnit.MINUTES);
+        final ScheduledFuture<Boolean> cancel = scheduler.schedule(() -> true, 100,
+            TimeUnit.MINUTES);
 
         // Create threads to get future results.
         final AtomicBoolean successResult = new AtomicBoolean(false);
@@ -128,11 +132,13 @@ public class WarpScheduledExecutorServiceTest {
     @Test
     public void fixedRate() throws InterruptedException {
         final List<Instant> instants1 = new ArrayList<>();
-        final ScheduledFuture<?> future1 = scheduler.scheduleAtFixedRate(() -> instants1.add(clock.instant()), 3, 2,
-                TimeUnit.MINUTES);
+        final ScheduledFuture<?> future1 = scheduler.scheduleAtFixedRate(
+            () -> instants1.add(clock.instant()), 3, 2,
+            TimeUnit.MINUTES);
         final List<Instant> instants2 = new ArrayList<>();
-        final ScheduledFuture<?> future2 = scheduler.scheduleAtFixedRate(() -> instants2.add(clock.instant()), 4, 2,
-                TimeUnit.MINUTES);
+        final ScheduledFuture<?> future2 = scheduler.scheduleAtFixedRate(
+            () -> instants2.add(clock.instant()), 4, 2,
+            TimeUnit.MINUTES);
 
         // Run the minutes individually to ensure the runtimes.
         clock.plus(7, TimeUnit.MINUTES, 1, TimeUnit.MINUTES, 20, 0);
@@ -182,11 +188,13 @@ public class WarpScheduledExecutorServiceTest {
     @Test
     public void fixedDelay() throws InterruptedException {
         final List<Instant> instants1 = new ArrayList<>();
-        final ScheduledFuture<?> future1 = scheduler.scheduleWithFixedDelay(() -> instants1.add(clock.instant()), 3, 2,
-                TimeUnit.MINUTES);
+        final ScheduledFuture<?> future1 = scheduler.scheduleWithFixedDelay(
+            () -> instants1.add(clock.instant()), 3, 2,
+            TimeUnit.MINUTES);
         final List<Instant> instants2 = new ArrayList<>();
-        final ScheduledFuture<?> future2 = scheduler.scheduleWithFixedDelay(() -> instants2.add(clock.instant()), 4, 2,
-                TimeUnit.MINUTES);
+        final ScheduledFuture<?> future2 = scheduler.scheduleWithFixedDelay(
+            () -> instants2.add(clock.instant()), 4, 2,
+            TimeUnit.MINUTES);
 
         // Run the minutes individually to ensure the runtimes.
         clock.plus(7, TimeUnit.MINUTES, 1, TimeUnit.MINUTES, 20, 20);
@@ -236,7 +244,8 @@ public class WarpScheduledExecutorServiceTest {
     public void scheduled() {
         final List<Instant> instants = new ArrayList<>();
 
-        final ScheduledFuture<?> future = scheduler.schedule(() -> instants.add(clock.instant()), 10, TimeUnit.MINUTES);
+        final ScheduledFuture<?> future = scheduler.schedule(() -> instants.add(clock.instant()),
+            10, TimeUnit.MINUTES);
         scheduler.schedule((Runnable) () -> instants.add(clock.instant()), 11, TimeUnit.MINUTES);
         scheduler.schedule((Runnable) () -> instants.add(clock.instant()), 12, TimeUnit.MINUTES);
         scheduler.schedule((Runnable) () -> instants.add(clock.instant()), 15, TimeUnit.MINUTES);

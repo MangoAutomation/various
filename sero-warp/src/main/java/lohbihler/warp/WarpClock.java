@@ -23,6 +23,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
 public class WarpClock extends Clock {
+
     private final ZoneId zoneId;
     private LocalDateTime dateTime;
     private final List<ClockListener> listeners = new CopyOnWriteArrayList<>();
@@ -35,21 +36,28 @@ public class WarpClock extends Clock {
         this(zoneId, LocalDateTime.now(Clock.system(zoneId)));
     }
 
+    /**
+     * @param zoneId
+     * @param dateTime
+     */
     public WarpClock(final ZoneId zoneId, final LocalDateTime dateTime) {
         Objects.requireNonNull(zoneId, "zoneId");
         Objects.requireNonNull(dateTime, "dateTime");
         this.zoneId = zoneId;
         this.dateTime = dateTime;
+
     }
 
-    public TimeoutFuture<?> setTimeout(final Runnable command, final long timeout, final TimeUnit timeUnit) {
+    public TimeoutFuture<?> setTimeout(final Runnable command, final long timeout,
+        final TimeUnit timeUnit) {
         return setTimeout(() -> {
             command.run();
             return null;
         }, timeout, timeUnit);
     }
 
-    public <V> TimeoutFuture<V> setTimeout(final Callable<V> callable, final long timeout, final TimeUnit timeUnit) {
+    public <V> TimeoutFuture<V> setTimeout(final Callable<V> callable, final long timeout,
+        final TimeUnit timeUnit) {
         final LocalDateTime deadline = dateTime.plusNanos(timeUnit.toNanos(timeout));
         final TimeoutFutureImpl<V> future = new TimeoutFutureImpl<>();
         final ClockListener listener = new ClockListener() {
@@ -72,6 +80,7 @@ public class WarpClock extends Clock {
     }
 
     class TimeoutFutureImpl<V> implements TimeoutFuture<V> {
+
         private boolean success;
         private boolean cancelled;
         private Exception ex;
@@ -80,21 +89,26 @@ public class WarpClock extends Clock {
 
         @Override
         public V get() throws CancellationException, InterruptedException, Exception {
-            if (success)
+            if (success) {
                 return result;
-            if (ex != null)
+            }
+            if (ex != null) {
                 throw ex;
-            if (cancelled)
+            }
+            if (cancelled) {
                 throw new CancellationException();
+            }
 
             synchronized (this) {
                 wait();
             }
 
-            if (success)
+            if (success) {
                 return result;
-            if (ex != null)
+            }
+            if (ex != null) {
                 throw ex;
+            }
             throw new CancellationException();
         }
 
@@ -137,33 +151,41 @@ public class WarpClock extends Clock {
         listeners.remove(listener);
     }
 
-    public LocalDateTime set(final int year, final Month month, final int dayOfMonth, final int hour,
-            final int minute) {
+    public LocalDateTime set(final int year, final Month month, final int dayOfMonth,
+        final int hour,
+        final int minute) {
         return fireUpdate(LocalDateTime.of(year, month, dayOfMonth, hour, minute));
     }
 
-    public LocalDateTime set(final int year, final Month month, final int dayOfMonth, final int hour, final int minute,
-            final int second) {
+    public LocalDateTime set(final int year, final Month month, final int dayOfMonth,
+        final int hour, final int minute,
+        final int second) {
         return fireUpdate(LocalDateTime.of(year, month, dayOfMonth, hour, minute, second));
     }
 
-    public LocalDateTime set(final int year, final Month month, final int dayOfMonth, final int hour, final int minute,
-            final int second, final int nanoOfSecond) {
-        return fireUpdate(LocalDateTime.of(year, month, dayOfMonth, hour, minute, second, nanoOfSecond));
+    public LocalDateTime set(final int year, final Month month, final int dayOfMonth,
+        final int hour, final int minute,
+        final int second, final int nanoOfSecond) {
+        return fireUpdate(
+            LocalDateTime.of(year, month, dayOfMonth, hour, minute, second, nanoOfSecond));
     }
 
-    public LocalDateTime set(final int year, final int month, final int dayOfMonth, final int hour, final int minute) {
+    public LocalDateTime set(final int year, final int month, final int dayOfMonth, final int hour,
+        final int minute) {
         return fireUpdate(LocalDateTime.of(year, month, dayOfMonth, hour, minute));
     }
 
-    public LocalDateTime set(final int year, final int month, final int dayOfMonth, final int hour, final int minute,
-            final int second) {
+    public LocalDateTime set(final int year, final int month, final int dayOfMonth, final int hour,
+        final int minute,
+        final int second) {
         return fireUpdate(LocalDateTime.of(year, month, dayOfMonth, hour, minute, second));
     }
 
-    public LocalDateTime set(final int year, final int month, final int dayOfMonth, final int hour, final int minute,
-            final int second, final int nanoOfSecond) {
-        return fireUpdate(LocalDateTime.of(year, month, dayOfMonth, hour, minute, second, nanoOfSecond));
+    public LocalDateTime set(final int year, final int month, final int dayOfMonth, final int hour,
+        final int minute,
+        final int second, final int nanoOfSecond) {
+        return fireUpdate(
+            LocalDateTime.of(year, month, dayOfMonth, hour, minute, second, nanoOfSecond));
     }
 
     public LocalDateTime plus(final TemporalAmount amountToAdd) {
@@ -214,10 +236,12 @@ public class WarpClock extends Clock {
         return plus(amount, unit, 0, null, 0, endSleep);
     }
 
-    public LocalDateTime plus(final int amount, final TimeUnit unit, final int byAmount, final TimeUnit byUnit,
-            final long eachSleep, final long endSleep) {
+    public LocalDateTime plus(final int amount, final TimeUnit unit, final int byAmount,
+        final TimeUnit byUnit,
+        final long eachSleep, final long endSleep) {
         long remainder = unit.toNanos(amount);
-        final long each = (byUnit == null ? unit : byUnit).toNanos(byAmount == 0 ? amount : byAmount);
+        final long each = (byUnit == null ? unit : byUnit).toNanos(
+            byAmount == 0 ? amount : byAmount);
 
         LocalDateTime result = null;
         try {
@@ -227,8 +251,9 @@ public class WarpClock extends Clock {
             } else {
                 while (remainder > 0) {
                     long nanos = each;
-                    if (each > remainder)
+                    if (each > remainder) {
                         nanos = remainder;
+                    }
                     result = plusNanos(nanos);
                     remainder -= nanos;
                     Thread.sleep(eachSleep);
